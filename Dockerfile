@@ -13,10 +13,12 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install PHP extensions that are available in docker-php-ext-install
-RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg
+# Install GD extension FIRST (required for PHP 8.4 - known issue with pkg-config)
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg
+RUN docker-php-ext-install -j$(nproc) gd
+
+# Install remaining PHP extensions
 RUN docker-php-ext-install -j$(nproc) \
-    gd \
     pdo \
     pdo_pgsql \
     opcache \
