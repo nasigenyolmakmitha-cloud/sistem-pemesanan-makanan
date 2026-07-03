@@ -2,38 +2,32 @@ FROM php:8.4-fpm
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    pkg-config \
+    git \
+    curl \
+    unzip \
     libpq-dev \
     libfreetype6-dev \
     libjpeg62-turbo-dev \
     libpng-dev \
     libzip-dev \
     libonig-dev \
-    git \
-    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install GD extension FIRST (required for PHP 8.4 - known issue with pkg-config)
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg
-RUN docker-php-ext-install -j$(nproc) gd
+# Install php-extension-installer (menangani otomatis semua dependency
+# system & pkg-config yang dibutuhkan tiap ekstensi PHP, termasuk fix
+# untuk masalah pdo_pgsql di PHP 8.4)
+ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 
-# Fix: libpq-dev di Debian Bookworm tidak menyediakan file pkg-config (.pc)
-# sehingga docker-php-ext-install pdo_pgsql gagal mencari libpq.
-RUN mkdir -p /usr/lib/$(dpkg-architecture -q DEB_HOST_MULTIARCH)/pkgconfig \
-    && ARCH=$(dpkg-architecture -q DEB_HOST_MULTIARCH) \
-    && printf 'prefix=/usr\nlibdir=${prefix}/lib/%s\nincludedir=${prefix}/include\n\nName: libpq\nDescription: PostgreSQL libpq library\nVersion: 15.0\nLibs: -L${libdir} -lpq\nCflags: -I${includedir}\n' "$ARCH" \
-    > /usr/lib/$ARCH/pkgconfig/libpq.pc
-
-# Install remaining PHP extensions
-RUN docker-php-ext-install -j$(nproc) \
+# Install semua ekstensi PHP yang dibutuhkan
+RUN install-php-extensions \
+    gd \
     pdo \
     pdo_pgsql \
     opcache \
     sodium \
     zip \
-    mbstring
-# Install Redis extension from PECL
-RUN pecl install redis-5.3.7 && docker-php-ext-enable redis
+    mbstring \
+    redis
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -57,4 +51,3 @@ EXPOSE 8000
 
 # Start application
 CMD ["php", "-S", "0.0.0.0:8000", "-t", "public"]
-
