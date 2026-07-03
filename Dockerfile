@@ -17,6 +17,13 @@ RUN apt-get update && apt-get install -y \
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg
 RUN docker-php-ext-install -j$(nproc) gd
 
+# Fix: libpq-dev di Debian Bookworm tidak menyediakan file pkg-config (.pc)
+# sehingga docker-php-ext-install pdo_pgsql gagal mencari libpq.
+RUN mkdir -p /usr/lib/$(dpkg-architecture -q DEB_HOST_MULTIARCH)/pkgconfig \
+    && ARCH=$(dpkg-architecture -q DEB_HOST_MULTIARCH) \
+    && printf 'prefix=/usr\nlibdir=${prefix}/lib/%s\nincludedir=${prefix}/include\n\nName: libpq\nDescription: PostgreSQL libpq library\nVersion: 15.0\nLibs: -L${libdir} -lpq\nCflags: -I${includedir}\n' "$ARCH" \
+    > /usr/lib/$ARCH/pkgconfig/libpq.pc
+
 # Install remaining PHP extensions
 RUN docker-php-ext-install -j$(nproc) \
     pdo \
@@ -25,7 +32,6 @@ RUN docker-php-ext-install -j$(nproc) \
     sodium \
     zip \
     mbstring
-
 # Install Redis extension from PECL
 RUN pecl install redis-5.3.7 && docker-php-ext-enable redis
 
