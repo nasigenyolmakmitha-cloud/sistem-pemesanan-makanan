@@ -1,0 +1,15 @@
+.git
+.gitignore
+.env
+.env.example
+node_modules
+npm-debug.log
+.DS_Store
+.vscode
+.idea
+*.log
+storage/logs/*
+bootstrap/cache/*
+vendor/
+.php-cs-fixer.cache
+
