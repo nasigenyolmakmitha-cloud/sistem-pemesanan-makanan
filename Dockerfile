@@ -1,3 +1,16 @@
+FROM node:20-alpine AS frontend-build
+
+WORKDIR /app
+
+# Copy hanya file yang dibutuhkan untuk install dependency dulu (cache-friendly)
+COPY package*.json ./
+RUN npm install
+
+# Copy sisa source yang dibutuhkan Vite untuk build (resources, config, dsb)
+COPY . .
+RUN npm run build
+
+
 FROM php:8.4-fpm
 
 # Install system dependencies
@@ -39,6 +52,9 @@ COPY . .
 
 # Install PHP dependencies
 RUN COMPOSER_ALLOW_SUPERUSER=1 composer install --optimize-autoloader --no-scripts --no-interaction
+
+# Copy hasil build asset Vite (JS/CSS terkompilasi) dari stage frontend-build
+COPY --from=frontend-build /app/public/build /app/public/build
 
 # Create necessary directories
 RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views
