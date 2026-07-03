@@ -1,27 +1,24 @@
 FROM php:8.4-fpm
 
-# Install system dependencies
+# Install system dependencies FIRST
 RUN apt-get update && apt-get install -y \
-    pkg-config \
-    libpq-dev \
     libfreetype6-dev \
     libjpeg62-turbo-dev \
     libpng-dev \
     libzip-dev \
     libonig-dev \
+    libpq-dev \
     git \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install PHP extensions - configure GD first with proper detection
-RUN docker-php-ext-configure gd \
-    --enable-gd \
-    --with-freetype \
-    --with-jpeg
+# IMPORTANT: Install GD FIRST before other extensions
+# This is a known issue in PHP 8.4 where GD must be installed first
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg
+RUN docker-php-ext-install -j$(nproc) gd
 
-# Install all PHP extensions
+# Then install other extensions
 RUN docker-php-ext-install -j$(nproc) \
-    gd \
     pdo \
     pdo_pgsql \
     opcache \
