@@ -5,7 +5,7 @@
         <div class="card border-0 shadow-lg rounded-5 overflow-hidden p-5">
             <div class="mb-4">
                 <div style="width: 200px; height: 200px; margin: 0 auto;">
-                    <dotlottie-player src="{{ asset('lottie/Order Received imagery.lottie') }}" background="transparent" speed="1" style="width: 200px; height: 200px;" loop autoplay></dotlottie-player>
+                    <dotlottie-player src="{{ asset('lottie/Order-Received-imagery.lottie') }}" background="transparent" speed="1" style="width: 200px; height: 200px;" loop autoplay></dotlottie-player>
                 </div>
             </div>
             
