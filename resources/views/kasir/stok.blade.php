@@ -11,18 +11,41 @@
 </div>
 
 <div class="anim-fade-in" style="margin-bottom: 1.5rem;">
-    <div style="display: flex; align-items: center; background: #fff; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); padding: 5px 15px; border: 1px solid rgba(0,0,0,0.05);">
-        <i class="fad fa-search" style="color: #FF7043; font-size: 1.2rem; margin-right: 12px;"></i>
-        <input type="text" id="searchInput" placeholder="Cari nama menu..." style="border: none; outline: none; width: 100%; padding: 12px 0; font-size: 0.95rem; font-weight: 600; color: #333; background: transparent;">
+    <div style="display: flex; align-items: center; flex-wrap: wrap; background: #fff; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); padding: 5px 15px; border: 1px solid rgba(0,0,0,0.05); gap: 10px;">
+        <div style="display: flex; align-items: center; flex: 1; min-width: 200px;">
+            <i class="fad fa-search" style="color: #FF7043; font-size: 1.2rem; margin-right: 12px;"></i>
+            <input type="text" id="searchInput" placeholder="Cari nama menu..." style="border: none; outline: none; width: 100%; padding: 12px 0; font-size: 0.95rem; font-weight: 600; color: #333; background: transparent;">
+        </div>
+        
+        <div style="width: 1px; height: 30px; background: #eee; display: inline-block;"></div>
+
+        <div style="min-width: 160px; display: flex; align-items: center;">
+            <i class="fad fa-filter" style="color: #999; margin-right: 8px;"></i>
+            <select id="kategoriFilter" style="border: none; outline: none; width: 100%; padding: 12px 0; font-size: 0.95rem; font-weight: 600; color: #333; background: transparent; cursor: pointer;">
+                <option value="">Semua Kategori</option>
+                <option value="makanan">Makanan</option>
+                <option value="tambahan">Tambahan</option>
+                <option value="minuman">Minuman</option>
+            </select>
+        </div>
     </div>
 </div>
+
+@if(session('success'))
+<ion-card color="success" class="anim-fade-in" style="margin:0 0 1.5rem 0; --background:rgba(76,175,80,0.1); --color:#388E3C; border-radius:14px; box-shadow:none; border:1px solid rgba(76,175,80,0.3);">
+    <ion-card-content style="padding:1rem 1.2rem; display:flex; align-items:center; gap:10px; font-weight:700; font-size:0.9rem;">
+        <i class="fad fa-check-circle" style="font-size:1.4rem;"></i>
+        {{ session('success') }}
+    </ion-card-content>
+</ion-card>
+@endif
 
 <form action="/kasir/stok" method="POST" id="form-stok" style="display:flex; flex-direction:column;">
     @csrf
     <ion-card style="margin:0; border-radius:20px; box-shadow:0 4px 20px rgba(0,0,0,0.06); border:none; background:#ffffff; overflow: hidden; flex:1;">
         <ion-list style="background:transparent; padding:0; padding-bottom: 160px;" class="anim-fade-in">
             @forelse($menus as $m)
-            <ion-item class="menu-item-row" data-nama="{{ strtolower($m->nama) }}" lines="full" style="--background:transparent; --padding-start:20px; --padding-end:20px; --min-height:90px; --border-color: rgba(0,0,0,0.05);">
+            <ion-item class="menu-item-row" data-nama="{{ strtolower($m->nama) }}" data-kategori="{{ strtolower($m->kategori) }}" lines="full" style="--background:transparent; --padding-start:20px; --padding-end:20px; --min-height:90px; --border-color: rgba(0,0,0,0.05);">
                 <ion-thumbnail slot="start" style="--border-radius:14px; width:65px; height:65px; background:#f8f9fa; display:flex; align-items:center; justify-content:center;">
                     @if($m->foto)
                         <img src="{{ asset('storage/'.$m->foto) }}" style="width:100%; height:100%; object-fit:cover; border-radius:14px;" />
@@ -138,30 +161,44 @@
 
 @section('scripts')
 <script>
-    // LOGIKA PENCARIAN MENU SECARA REAL-TIME
-    document.getElementById('searchInput')?.addEventListener('input', function(e) {
-        const query = e.target.value.toLowerCase().trim();
-        const items = document.querySelectorAll('.menu-item-row');
-        let visibleCount = 0;
-        const emptyMsg = document.getElementById('emptySearchMsg');
+    // LOGIKA PENCARIAN & FILTER KATEGORI SECARA REAL-TIME
+    const searchInput = document.getElementById('searchInput');
+    const kategoriFilter = document.getElementById('kategoriFilter');
+    const menuItems = document.querySelectorAll('.menu-item-row');
+    const emptyMsg = document.getElementById('emptySearchMsg');
 
-        items.forEach(item => {
+    function filterMenu() {
+        const query = searchInput.value.toLowerCase().trim();
+        const kategori = kategoriFilter.value.toLowerCase();
+        let visibleCount = 0;
+
+        menuItems.forEach(item => {
             const nama = item.getAttribute('data-nama');
-            if (nama.includes(query)) {
-                item.style.display = ''; // Munculkan baris
+            const itemKategori = item.getAttribute('data-kategori');
+
+            // Cek apakah nama cocok DAN kategori cocok (jika kategori tidak kosong)
+            const matchNama = nama.includes(query);
+            const matchKategori = (kategori === "" || itemKategori === kategori);
+
+            if (matchNama && matchKategori) {
+                item.style.display = ''; // Tampilkan
                 visibleCount++;
             } else {
-                item.style.display = 'none'; // Sembunyikan baris
+                item.style.display = 'none'; // Sembunyikan
             }
         });
 
         // Tampilkan pesan kosong jika tidak ada yang cocok
-        if (visibleCount === 0 && items.length > 0) {
+        if (visibleCount === 0 && menuItems.length > 0) {
             emptyMsg.style.display = 'block';
         } else {
             emptyMsg.style.display = 'none';
         }
-    });
+    }
+
+    // Jalankan fungsi filter ketika diketik atau saat dropdown diubah
+    searchInput?.addEventListener('input', filterMenu);
+    kategoriFilter?.addEventListener('change', filterMenu);
 
     // LOGIKA STOK
     function updateBadge(menuId) {
@@ -190,20 +227,5 @@
             input.value = 0;
         }
     }
-    
-    document.addEventListener('DOMContentLoaded', async () => {
-        @if(session('success'))
-        const toast = document.createElement('ion-toast');
-        toast.message = "{{ session('success') }}";
-        toast.duration = 3000;
-        toast.color = "success";
-        toast.icon = "checkmark-circle";
-        toast.position = "top";
-        toast.cssClass = 'custom-toast';
-
-        document.body.appendChild(toast);
-        await toast.present();
-        @endif
-    });
 </script>
 @endsection

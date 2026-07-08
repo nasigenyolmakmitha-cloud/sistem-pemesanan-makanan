@@ -28,36 +28,25 @@
 @endif
 
 <div style="margin-bottom: 1.5rem;">
-    <form action="/admin/menu" method="GET" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
         
         <div style="flex:1; min-width:200px;">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama menu..."
+            <input type="text" id="adminSearchInput" placeholder="Cari nama menu..."
                 style="width:100%; padding:12px 16px; border:2px solid #eee; border-radius:12px; font-size:0.9rem; font-family:inherit; outline:none; transition:border 0.2s; box-sizing:border-box;"
                 onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='#eee'">
         </div>
 
         <div style="min-width:180px;">
-            <select name="kategori" onchange="this.form.submit()" style="width:100%; padding:12px 16px; border:2px solid #eee; border-radius:12px; font-size:0.9rem; font-family:inherit; outline:none; background:#fff; box-sizing:border-box; transition:border 0.2s; cursor:pointer;"
+            <select id="adminKategoriFilter" style="width:100%; padding:12px 16px; border:2px solid #eee; border-radius:12px; font-size:0.9rem; font-family:inherit; outline:none; background:#fff; box-sizing:border-box; transition:border 0.2s; cursor:pointer;"
                 onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='#eee'">
                 <option value="">Semua Kategori</option>
-                <option value="Makanan" {{ request('kategori') == 'Makanan' ? 'selected' : '' }}>Makanan</option>
-                <option value="Minuman" {{ request('kategori') == 'Minuman' ? 'selected' : '' }}>Minuman</option>
-                <option value="Tambahan" {{ request('kategori') == 'Tambahan' ? 'selected' : '' }}>Tambahan</option>
+                <option value="makanan">Makanan</option>
+                <option value="minuman">Minuman</option>
+                <option value="tambahan">Tambahan</option>
             </select>
         </div>
 
-        <button type="submit" style="background:var(--orange); color:#fff; border:none; border-radius:12px; font-weight:700; font-size:0.9rem; height:46px; padding:0 24px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:background 0.2s;">
-            <ion-icon name="search-outline"></ion-icon> Cari
-        </button>
-
-        @if(request('search') || request('kategori'))
-            <a href="/admin/menu" style="text-decoration:none;">
-                <button type="button" style="background:#f5f5f5; color:#666; border:none; border-radius:12px; font-weight:700; font-size:0.9rem; height:46px; padding:0 16px; cursor:pointer; display:inline-flex; align-items:center; transition:background 0.2s;">
-                    Reset
-                </button>
-            </a>
-        @endif
-    </form>
+    </div>
 </div>
 
 <ion-card style="margin:0;">
@@ -74,8 +63,15 @@
                     </tr>
                 </thead>
                 <tbody>
+                    <tr id="adminEmptyMsg" style="display:none;">
+                        <td colspan="5" style="text-align:center; padding:3rem; color:#999;">
+                            <ion-icon name="search-outline" style="font-size:3rem; opacity:0.3; display:block; margin:0 auto 1rem;"></ion-icon>
+                            Menu yang dicari tidak ditemukan.
+                        </td>
+                    </tr>
+
                     @forelse($menus as $m)
-                    <tr style="border-bottom:1px solid #f5f5f5; transition:background 0.2s;">
+                    <tr class="admin-menu-row" data-nama="{{ strtolower($m->nama) }}" data-kategori="{{ strtolower($m->kategori) }}" style="border-bottom:1px solid #f5f5f5; transition:background 0.2s;">
                         <td style="padding:14px 16px;">
                             <div style="display:flex; align-items:center; gap:12px;">
                                 <div style="width:48px; height:48px; border-radius:12px; background:#f5f5f5; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">
@@ -129,7 +125,7 @@
                     <tr>
                         <td colspan="5" style="text-align:center; padding:3rem; color:#999;">
                             <ion-icon name="restaurant-outline" style="font-size:3rem; opacity:0.3; display:block; margin:0 auto 1rem;"></ion-icon>
-                            Tidak ada data menu yang ditemukan.
+                            Tidak ada data menu di database.
                         </td>
                     </tr>
                     @endforelse
@@ -143,6 +139,7 @@
 
 @section('scripts')
 <script>
+// Fungsi Hapus Menu
 function confirmDeleteMenu(id) {
     Swal.fire({
         title: 'Hapus Menu?',
@@ -160,5 +157,46 @@ function confirmDeleteMenu(id) {
         }
     });
 }
+
+// LOGIKA PENCARIAN & FILTER ADMIN REAL-TIME
+const adminSearch = document.getElementById('adminSearchInput');
+const adminFilter = document.getElementById('adminKategoriFilter');
+const adminRows = document.querySelectorAll('.admin-menu-row');
+const adminEmpty = document.getElementById('adminEmptyMsg');
+
+function filterAdminMenu() {
+    const query = adminSearch ? adminSearch.value.toLowerCase().trim() : '';
+    const kategori = adminFilter ? adminFilter.value.toLowerCase() : '';
+    let visibleCount = 0;
+
+    adminRows.forEach(row => {
+        // Mengambil data dari baris tabel
+        const nama = row.getAttribute('data-nama');
+        const rowKat = row.getAttribute('data-kategori');
+
+        // Pengecekan kecocokan
+        const matchNama = nama.includes(query);
+        const matchKat = (kategori === "" || rowKat === kategori);
+
+        if (matchNama && matchKat) {
+            row.style.display = ''; // Munculkan baris
+            visibleCount++;
+        } else {
+            row.style.display = 'none'; // Sembunyikan baris
+        }
+    });
+
+    // Menampilkan pesan jika tidak ada baris yang sesuai kriteria pencarian
+    if (visibleCount === 0 && adminRows.length > 0) {
+        if(adminEmpty) adminEmpty.style.display = '';
+    } else {
+        if(adminEmpty) adminEmpty.style.display = 'none';
+    }
+}
+
+// Memicu filter setiap kali mengetik atau mengubah opsi
+adminSearch?.addEventListener('input', filterAdminMenu);
+adminFilter?.addEventListener('change', filterAdminMenu);
+
 </script>
 @endsection

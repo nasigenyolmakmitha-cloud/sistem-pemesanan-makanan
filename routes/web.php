@@ -841,7 +841,16 @@ Route::prefix('kasir')->middleware(['auth', 'role:kasir'])->group(function () {
 
     // Manajemen Stok Kasir
     Route::get('/stok', function () {
-        $menus = Menu::all();
+        // Mengurutkan dengan prioritas: 1. Makanan, 2. Tambahan, 3. Minuman
+        $menus = Menu::orderByRaw("
+            CASE 
+                WHEN kategori = 'Makanan' THEN 1
+                WHEN kategori = 'Tambahan' THEN 2
+                WHEN kategori = 'Minuman' THEN 3
+                ELSE 4 
+            END
+        ")->get();
+        
         return view('kasir.stok', compact('menus'));
     });
 
