@@ -172,17 +172,24 @@
         .menu-footer {
             padding: 1rem;
             border-top: 1px solid rgba(255,255,255,0.06);
+            margin-top: auto; /* Mendorong ke bawah jika menu sedikit, tetap ikut scroll jika menu banyak */
+            flex-shrink: 0; /* Mencegah kontainer mengecil atau melar tidak beraturan */
         }
 
         .logout-btn {
             width: 100%;
-            --background: rgba(244,67,54,0.12);
-            --color: #EF5350;
+            height: 46px !important; /* Mengunci tinggi tombol secara mutlak agar tidak melar ke bawah */
+            --height: 46px !important; /* Mengunci tinggi internal komponen Ionic */
+            --background: rgba(244, 67, 54, 0.12) !important; /* Warna merah gelap transparan sesuai gambar */
+            --background-hover: rgba(244, 67, 54, 0.2) !important;
+            --color: #EF5350 !important; /* Warna teks & ikon merah cerah sesuai gambar */
             --border-radius: 12px;
+            --box-shadow: none;
             font-weight: 700;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            margin: 0;
         }
-
         /* Main Content Area */
         ion-header ion-toolbar {
             --background: #ffffff;
@@ -323,16 +330,20 @@
                     </ion-item>
 
                     <!-- Logout -->
+                    </ion-content>
+                    <ion-footer class="ion-no-border" style="background: #16213E;">
                     <div class="menu-footer">
                         <form action="/admin/logout" method="POST" id="admin-logout-form">
                             @csrf
-                            <ion-button expand="block" fill="clear" class="logout-btn" type="button" onclick="confirmLogout()">
-                                <ion-icon name="log-out-outline" slot="start"></ion-icon>
-                                Keluar
-                            </ion-button>
+                            <div style="display: block;">
+                                <ion-button expand="block" class="logout-btn" type="button" onclick="confirmLogout()">
+                                    <ion-icon name="log-out-outline" style="margin-right: 8px; font-size: 1.2rem;"></ion-icon>
+                                    KELUAR
+                                </ion-button>
+                            </div>
                         </form>
                     </div>
-                </ion-content>
+                </ion-footer>
             </ion-menu>
 
             <!-- Main Content -->
