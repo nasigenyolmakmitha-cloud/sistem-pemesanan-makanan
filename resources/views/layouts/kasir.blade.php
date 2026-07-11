@@ -228,7 +228,7 @@
                     </div>
                     <div>
                         <div class="user-info">
-                            <h3>Be Genyol</h3>
+                            <h3>NBG Mak Mitha</h3>
                             <span>Panel Kasir — {{ Auth::user()->username ?? 'Kasir' }}</span>
                         </div>
                     </div>

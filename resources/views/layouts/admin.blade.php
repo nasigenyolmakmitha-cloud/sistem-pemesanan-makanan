@@ -285,7 +285,7 @@
                                 <i class="fad fa-utensils-alt"></i>
                             </div>
                             <div class="brand-text">
-                                <h3>Be Genyol</h3>
+                                <h3>NBG Mak Mitha</h3>
                                 <span>Admin Panel</span>
                             </div>
                         </div>
